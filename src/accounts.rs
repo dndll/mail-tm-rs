@@ -1,23 +1,15 @@
 use anyhow::Error;
 use serde::{Deserialize, Serialize};
 
-use crate::http::{get_headers, Client};
+use crate::{http, MAIL_API_URL};
+use crate::http::Client;
 use crate::user::User;
-use crate::MAIL_API_URL;
 
-// TODO make error
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Account {
-    #[serde(rename = "@context")]
-    pub context: String,
-    #[serde(rename = "@id")]
-    pub id: String,
-    #[serde(rename = "@type")]
-    pub type_field: String,
-    #[serde(rename = "id")]
-    pub id2: String,
     pub address: String,
+    pub password: Option<String>,
     pub quota: i64,
     pub used: i64,
     #[serde(rename = "isDisabled")]
@@ -26,24 +18,102 @@ pub struct Account {
     pub created_at: serde_json::Value,
     #[serde(rename = "updatedAt")]
     pub updated_at: ::serde_json::Value,
+    //TODO these are not values, they're utc date
+    #[serde(rename = "@context")]
+    pub context: Option<String>,
+    #[serde(rename = "@id")]
+    pub at_id: Option<String>,
+    #[serde(rename = "@type")]
+    pub type_field: Option<String>,
+    #[serde(rename = "id")]
+    pub id: Option<String>,
 }
 
-pub async fn create_email(user: &User) -> Result<Account, Error> {
+impl Account {
+    pub fn from_user(user: &User) -> Account {
+        Account {
+            address: format!("{}@{}", user.id, user.domain),
+            password: Some(user.password.clone()),
+            quota: 0,
+            used: 0,
+            is_disabled: false,
+            created_at: Default::default(),
+            updated_at: Default::default(),
+            context: None,
+            at_id: None,
+            type_field: None,
+            id: None,
+        }
+    }
+}
+
+pub async fn create(user: &User) -> Result<Account, Error> {
     let client = Client::new()?.build()?;
 
-    let create_as_string = serde_json::json!(user);
-    let string = create_as_string.to_string();
-    let res = client
+    log::debug!("Creating account for user {:?}", user);
+
+    let json = serde_json::json!(Account::from_user(user));
+    let json_str = json.to_string();
+    let response = client
         .post(format!("{}/accounts", MAIL_API_URL).as_str())
-        .body(string)
+        .body(json_str)
         .send()
-        .await?
+        .await?;
+
+    let code = response.status();
+
+    let response = response
         .text()
         .await?;
 
-    log::debug!("Response from user creation: {}", res);
-    Ok(serde_json::from_str(&res)?)
+    http::check_response_status(&code, &response).await?;
+
+    log::trace!("Created account: {}", response);
+    Ok(serde_json::from_str(&response)?)
 }
+
+pub async fn get(id: &str) -> Result<Account, Error> {
+    let client = Client::new()?.build()?;
+
+    log::debug!("Searching for account with id {}", id);
+
+
+    let response = client
+        .get(&format!("{}/accounts/{}", MAIL_API_URL, id))
+        .send()
+        .await?;
+
+    let code = response.status();
+
+    let response = response
+        .text()
+        .await?;
+
+    http::check_response_status(&code, &response).await?;
+
+    log::trace!("Retrieved a user: {}", response);
+    Ok(serde_json::from_str(&response)?)
+}
+
+pub async fn delete(id: &str) -> Result<(), Error> {
+    let client = Client::new()?.build()?;
+
+    log::debug!("Searching for account with id {}", id);
+
+
+    let response = client
+        .delete(&format!("{}/accounts/{}", MAIL_API_URL, id))
+        .send()
+        .await?;
+
+    let code = response.status();
+
+    http::check_response_status(&code, "").await?;
+
+    log::trace!("Deleted user with id {}", id);
+    Ok(())
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -51,8 +121,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_user() -> Result<(), Error> {
+        pretty_env_logger::init();
+
+        let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
         assert_eq!(
-            create_email(&User::new("sd", "s"))
+            create(&user)
                 .await?
                 .address
                 .as_str()
@@ -66,10 +139,9 @@ mod tests {
     async fn test_create_user_twenty() -> Result<(), Error> {
         let mut emails = vec![];
         for _ in 0..20 {
-            let result = create_email(&User::new("", "")).await;
-            let response = result?;
-            let string = response.address;
-            emails.push(string)
+            let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
+            let result = create(&user).await?;
+            emails.push(result.address)
         }
         println!("{:?}", emails);
         assert_eq!(emails.len(), 20);

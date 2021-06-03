@@ -1,10 +1,7 @@
-use anyhow::{Error, Context};
-use reqwest::header::{AUTHORIZATION, CONTENT_TYPE, HeaderMap, USER_AGENT as USER_AGENT_PARAM};
-use reqwest::StatusCode;
+use crate::http::{get_headers, Client};
+use crate::{MAIL_API_URL};
+use anyhow::{Context, Error};
 use serde::{Deserialize, Serialize};
-
-use crate::email::{MAIL_API_URL, USER_AGENT};
-use crate::email::EmailUser;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -61,43 +58,34 @@ pub struct To {
 }
 
 pub(crate) async fn inspect_email(id: String, token: &String) -> Result<Message, Error> {
-    let client = reqwest::Client::builder();
-    let mut header_map = HeaderMap::new();
-    header_map.insert(USER_AGENT_PARAM, USER_AGENT.parse().unwrap());
-    header_map.insert("Origin", "https://mail.tm".parse().unwrap());
-    header_map.insert("Referer", "https://mail.tm/en".parse().unwrap());
-    header_map.insert("TE", "Trailers".parse().unwrap());
-    header_map.insert(CONTENT_TYPE, "application/json;charset=utf-8".parse().unwrap()); //TODO memoize me
-    header_map.insert(AUTHORIZATION, format!("Bearer {}", token).parse().unwrap()); //TODO memoize me
-
-    let client = client.default_headers(header_map).build()?;
+    let client = Client::new()?.with_auth(token)?.build()?;
 
     let uri = format!("{}{}", MAIL_API_URL, id);
     let res = client.get(uri.as_str());
 
-    let res = res.send()
-        .await?;
+    let res = res.send().await?;
 
-    let res = res
-        .text()
-        .await?;
+    let res = res.text().await?;
 
     Ok(serde_json::from_str(&res)?)
 }
 
+// TODO move me
 pub(crate) fn extract_link(message: Message) -> Result<String, Error> {
     let link: Vec<&str> = message.text.split("Email: ").collect();
-    Ok(link.last().context("Failed to get the last part of the link")?.to_string())
+    Ok(link
+        .last()
+        .context("Failed to get the last part of the link")?
+        .to_string())
 }
 
+// TODO move me
 pub(crate) async fn verify(link: &str) -> Result<bool, Error> {
     let client = reqwest::Client::builder();
-    let mut header_map = HeaderMap::new();
-    header_map.insert(USER_AGENT_PARAM, USER_AGENT.parse().unwrap());
-    header_map.insert("Origin", "https://discord.com".parse().unwrap());
-    header_map.insert("Referer", "https://mail.tm/en".parse().unwrap());
-    header_map.insert("Connection", "Keep-Alive".parse().unwrap());
+    let mut header_map = get_headers()?;
+    header_map.insert("Connection", "Keep-Alive".parse()?); // TODO dont think this is needed
     let client = client.default_headers(header_map).build()?;
+
     let res = client.get(link);
     let response = res.send().await?;
     let status = response.status();
@@ -108,37 +96,36 @@ pub(crate) async fn verify(link: &str) -> Result<bool, Error> {
 
 #[cfg(test)]
 mod tests {
-    use crate::email::auth::get_token;
-    use crate::email::list::list_messages;
-
     use super::*;
+    use crate::auth::get_token;
+    use crate::list::list_messages;
     use crate::user::User;
 
     #[tokio::test]
-    async fn test_inspect_email() {
-        let user = User::new();
+    async fn test_inspect_email() -> Result<(), Error> {
+        let user = User::default();
 
-        let token = get_token(&user).await.unwrap();
-        let messages = list_messages(token.clone()).await.unwrap();
+        let token = get_token(&user).await?;
+        let messages = list_messages(&token.token).await?;
         let option = messages.hydra_member.first();
         let string = option.cloned().unwrap().id;
-        let result = inspect_email(string, token.token).await;
-        let message = result.unwrap();
+        let result = inspect_email(string, &token.token).await;
+        let message = result?;
         let x = message.subject.as_str();
-        assert_eq!(x, "Dicks")
+        Ok(assert_eq!(x, "Dicks"))
     }
 
     #[tokio::test]
-    async fn test_extract_link() {
-        let user = User::new();
-        let token = get_token(&user).await.unwrap();
-        let messages = list_messages(token.clone()).await.unwrap();
+    async fn test_extract_link() -> Result<(), Error> {
+        let user = User::default();
+        let token = get_token(&user).await?;
+        let messages = list_messages(&token.token).await?;
         let option = messages.hydra_member.first();
         let string = option.cloned().unwrap().id;
-        let result = inspect_email(string, token.token).await;
-        let message = result.unwrap();
-        let link = extract_link(message);
+        let result = inspect_email(string, &token.token).await;
+        let message = result?;
+        let link = extract_link(message)?;
         assert_eq!(link, "https://click.discord.com/ls/click?upn=qDOo8cnwIoKzt0aLL1cBeFE1RlVCKJFF5zAq8ml-2BFh1dq-2FeX22E9yMPFmLMSO5CYiXhp9YkD384yJYhq5wsezFhmc87h5D0tuuItagq0ug2xmbKhXO-2BSCoRC2t-2FujW1YBv-2FIKZ8vJeJSMJb2PQZlEoLTqLKklLUSoIN1D4HilF29pECfudDdGqGkwyQGpyvDLqKX0wLK42rvINpYIt4cZA-3D-3DqU1n_NyEJlP74kWzsE7McLQfgTaUKC7V3ZvWt7sET3kDzR1JioO9boTqIaISBDsiBMro3kPCdP9P6xMk98HyGTUpXrno2At8MHKd2-2BG5bDxOMj4icRrHs49otfrcyIHIRKTQGZQL5BdLHeRjdQfe-2B7YGKDpfqGyfuNCGbKCIw6Sr8TNEa1ioSqrITYNbup6xXcYcUVn4vEtffdVSORDoIAb-2B6bbksOn7K9IFUfsBSYYZy8XE-3D".to_string());
-        assert_eq!(verify(link).await.unwrap(), true);
+        Ok(assert_eq!(verify(&link).await?, true))
     }
 }

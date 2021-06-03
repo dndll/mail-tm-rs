@@ -1,11 +1,8 @@
+use crate::MAIL_API_URL;
 use anyhow::Error;
-use reqwest::header::{AUTHORIZATION, CONTENT_TYPE, HeaderMap, USER_AGENT as USER_AGENT_PARAM};
-use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
-use crate::email::{MAIL_API_URL, EmailUser, USER_AGENT};
-use crate::email::auth::Token;
-use crate::email::create::CreateResponse;
+use crate::http::Client;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -65,17 +62,10 @@ pub struct To {
 }
 
 pub async fn list_messages(token: &String) -> Result<ListMessages, Error> {
-    let client = reqwest::Client::builder();
-    let mut header_map = HeaderMap::new();
-    header_map.insert(USER_AGENT_PARAM, USER_AGENT.parse().unwrap());
-    header_map.insert("Origin", "https://mail.tm".parse().unwrap());
-    header_map.insert("Referer", "https://mail.tm/en".parse().unwrap());
-    header_map.insert("TE", "Trailers".parse().unwrap());
-    header_map.insert(CONTENT_TYPE, "application/json;charset=utf-8".parse().unwrap()); //TODO memoize me
-    header_map.insert(AUTHORIZATION, format!("Bearer {}", token).parse().unwrap()); //TODO memoize me
-    let client = client.default_headers(header_map).build()?;
+    let client = Client::new()?.with_auth(&token)?.build()?;
 
-    let res = client.get(format!("{}/messages", MAIL_API_URL).as_str())
+    let res = client
+        .get(format!("{}/messages", MAIL_API_URL).as_str())
         .send()
         .await?
         .text()
@@ -84,28 +74,35 @@ pub async fn list_messages(token: &String) -> Result<ListMessages, Error> {
     Ok(serde_json::from_str(&res)?)
 }
 
+// TODO move me
 fn contains_verification_email(messages: ListMessages) -> bool {
-    messages.hydra_member.iter().any(|member| member.from.address.contains("noreply@discord.com"))
+    messages
+        .hydra_member
+        .iter()
+        .any(|member| member.from.address.contains("noreply@discord.com"))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::email::auth::get_token;
+    use crate::auth::get_token;
     use crate::user::User;
 
     #[tokio::test]
-    async fn test_list_messages() {
-        let user = User::new();
-        let token = get_token(&user).await.unwrap();
-        assert_eq!(list_messages(token).await.unwrap().hydra_total_items, 1);
+    async fn test_list_messages() -> Result<(), Error> {
+        let user = User::default();
+        let token = get_token(&user).await?;
+        Ok(assert_eq!(
+            list_messages(&token.token).await?.hydra_total_items,
+            1
+        ))
     }
 
     #[tokio::test]
-    async fn test_contains_verification() {
-        let user = User::new();
-        let token = get_token(&user).await.unwrap();
-        let messages = list_messages(token).await.unwrap();
-        assert_eq!(contains_verification_email(messages), false);
+    async fn test_contains_verification() -> Result<(), Error> {
+        let user = User::default();
+        let token = get_token(&user).await?;
+        let messages = list_messages(&token.token).await?;
+        Ok(assert_eq!(contains_verification_email(messages), false))
     }
 }
