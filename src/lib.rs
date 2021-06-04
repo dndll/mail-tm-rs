@@ -12,6 +12,7 @@ pub(crate) mod messages;
 pub(crate) mod error;
 pub(crate) mod http;
 pub(crate) mod user;
+pub(crate) mod hydra;
 
 pub(crate) const MAIL_API_URL: &str = "https://api.mail.tm";
 pub(crate) const USER_AGENT: &str = "Reqwest; mail-tm-rs";

@@ -39,10 +39,9 @@ mod tests {
     use super::*;
     use crate::accounts;
 
-    #[cfg(feature = "integration-test")]
     #[tokio::test]
-    async fn test_get_token() -> Result<(), Error> {
-        pretty_env_logger::init();
+    async fn test_token() -> Result<(), Error> {
+        pretty_env_logger::try_init();
         let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
 
         let create = accounts::create(&user).await.unwrap();

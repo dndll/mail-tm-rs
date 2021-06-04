@@ -1,28 +1,15 @@
-use crate::http::{get_headers, Client};
-use crate::{MAIL_API_URL, http};
 use anyhow::{Context, Error};
 use serde::{Deserialize, Serialize};
-use crate::domains::{View, Search};
+
+use crate::{http, MAIL_API_URL};
+use crate::http::{Client, get_headers};
+use crate::hydra::{HydraCollection, Search, View};
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Messages {
     #[serde(rename = "hydra:member")]
     pub messages: Vec<Message>,
-    #[serde(rename = "hydra:totalItems")]
-    pub total_items: i64,
-    #[serde(rename = "hydra:view")]
-    pub view: Option<View>,
-    #[serde(rename = "hydra:search")]
-    pub search: Option<Search>,
-}
-
-// TODO: use this in hydra generics
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct HydraCollection<T>  {
-    #[serde(rename = "hydra:member")]
-    pub messages: Vec<T>,
     #[serde(rename = "hydra:totalItems")]
     pub total_items: i64,
     #[serde(rename = "hydra:view")]
@@ -167,15 +154,15 @@ pub async fn patch(token: &str, id: &str) -> Result<(), Error> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::user::User;
-    use crate::accounts::create;
     use crate::accounts;
+    use crate::accounts::create;
+    use crate::user::User;
 
-    #[cfg(feature = "integration-test")]
+    use super::*;
+
     #[tokio::test]
     async fn test_messages() -> Result<(), Error> {
-        pretty_env_logger::init();
+        pretty_env_logger::try_init();
         let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
         let create = create(&user).await.unwrap();
         let token = crate::token(&user).await.unwrap();

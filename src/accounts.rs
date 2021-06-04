@@ -144,8 +144,8 @@ mod tests {
     use crate::token;
 
     #[tokio::test]
-    async fn test_create() -> Result<(), Error> {
-        pretty_env_logger::init();
+    async fn test_accounts_create() -> Result<(), Error> {
+        pretty_env_logger::try_init();
 
         let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
         assert_eq!(
@@ -159,10 +159,9 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "integration-test")]
     #[tokio::test]
-    async fn test_all() -> Result<(), Error> {
-        pretty_env_logger::init();
+    async fn test_accounts() -> Result<(), Error> {
+        pretty_env_logger::try_init();
         let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
 
         let create = create(&user).await.unwrap();
