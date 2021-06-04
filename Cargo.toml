@@ -15,6 +15,8 @@ categories = ["api-bindings", "web-programming::http-client"]
 
 
 #TODO make sure these are transient and nice
+#TODO add caching feature
+
 [dependencies]
 log = "0.4"
 anyhow = "1.0.34"

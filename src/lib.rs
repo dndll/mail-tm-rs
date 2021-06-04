@@ -20,6 +20,8 @@ pub mod user;
 pub(crate) const MAIL_API_URL: &str = "https://api.mail.tm";
 pub(crate) const USER_AGENT: &str = "Reqwest; mail-tm-rs";
 
+//TODO write docs
+
 pub async fn create_account(user: &User) -> Result<Account, Error> {
     accounts::create(user).await
 }
