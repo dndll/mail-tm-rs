@@ -85,7 +85,7 @@ impl Domains {
 }
 
 
-// TODO memoise me
+// TODO memoise me for some time
 pub async fn domains() -> Result<Domains, Error> {
     let client = Client::new()?.build()?;
 

@@ -12,7 +12,7 @@ pub struct Token {
     pub id: String,
 }
 
-pub async fn get_token(user: &User) -> Result<Token, Error> {
+pub async fn token(user: &User) -> Result<Token, Error> {
     let client = Client::new()?
         .build()?;
 
@@ -37,11 +37,22 @@ pub async fn get_token(user: &User) -> Result<Token, Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::accounts;
 
+    #[cfg(feature = "integration-test")]
     #[tokio::test]
     async fn test_get_token() -> Result<(), Error> {
-        let user = User::default();
-        assert_eq!(get_token(&user).await?.token.is_empty(), false);
+        pretty_env_logger::init();
+        let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
+
+        let create = accounts::create(&user).await.unwrap();
+
+        let token = token(&user).await.unwrap();
+
+        assert_eq!(token.token.is_empty(), false);
+
+        accounts::delete(&token.token, &create.id.unwrap()).await.unwrap();
+
         Ok(())
     }
 }

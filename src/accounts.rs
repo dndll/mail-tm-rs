@@ -159,7 +159,7 @@ mod tests {
         Ok(())
     }
 
-    #[feature("integration-test")]
+    #[cfg(feature = "integration-test")]
     #[tokio::test]
     async fn test_all() -> Result<(), Error> {
         pretty_env_logger::init();

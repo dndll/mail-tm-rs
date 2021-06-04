@@ -168,20 +168,28 @@ pub async fn patch(token: &str, id: &str) -> Result<(), Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::token::get_token;
     use crate::user::User;
+    use crate::accounts::create;
+    use crate::accounts;
 
+    #[cfg(feature = "integration-test")]
     #[tokio::test]
-    async fn test_inspect_email() -> Result<(), Error> {
-        let user = User::default();
-        //
-        // let token = get_token(&user).await?;
-        // let messages = list_messages(&token.token).await?;
-        // let option = messages.hydra_member.first();
-        // let string = option.cloned().unwrap().id;
-        // let result = inspect_email(string, &token.token).await;
-        // let message = result?;
-        // let x = message.subject.as_str();
+    async fn test_messages() -> Result<(), Error> {
+        pretty_env_logger::init();
+        let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
+        let create = create(&user).await.unwrap();
+        let token = crate::token(&user).await.unwrap();
+
+
+        let messages = messages(&token.token, None).await?;
+        assert_eq!(messages.total_items, 0);
+
+        let id = create.id.unwrap();
+
+        accounts::delete(&token.token, &id).await.unwrap();
+
         Ok(())
     }
+
+    //TODO other tests
 }

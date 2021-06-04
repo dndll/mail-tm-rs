@@ -29,7 +29,7 @@ pub async fn create(user: &User) -> Result<Account, Error> {
 
 pub async fn token(user: &User) -> Result<Token, Error> {
     log::info!("Retrieving user token..");
-    let token = token::get_token(user).await?;
+    let token = token::token(user).await?;
     log::debug!("Retrieved email token, response: {:?}", token);
     Ok(token)
 }
