@@ -72,8 +72,8 @@ pub async fn create(user: &User) -> Result<Account, Error> {
     Ok(serde_json::from_str(&response)?)
 }
 
-pub async fn get(id: &str) -> Result<Account, Error> {
-    let client = Client::new()?.build()?;
+pub async fn get(token: &str, id: &str) -> Result<Account, Error> {
+    let client = Client::new()?.with_auth(&token)?.build()?;
 
     log::debug!("Searching for account with id {}", id);
 
@@ -95,8 +95,8 @@ pub async fn get(id: &str) -> Result<Account, Error> {
     Ok(serde_json::from_str(&response)?)
 }
 
-pub async fn delete(id: &str) -> Result<(), Error> {
-    let client = Client::new()?.build()?;
+pub async fn delete(token: &str, id: &str) -> Result<(), Error> {
+    let client = Client::new()?.with_auth(&token)?.build()?;
 
     log::debug!("Searching for account with id {}", id);
 
@@ -114,13 +114,37 @@ pub async fn delete(id: &str) -> Result<(), Error> {
     Ok(())
 }
 
+pub async fn me(token: &str) -> Result<Account, Error> {
+    let client = Client::new()?.with_auth(&token)?.build()?;
+
+    log::debug!("Getting me");
+
+    let builder = client
+        .get(&format!("{}/me", MAIL_API_URL));
+
+    let response = builder
+        .send()
+        .await?;
+
+    let code = response.status();
+
+    let response = response
+        .text()
+        .await?;
+
+    http::check_response_status(&code, &response).await?;
+
+    log::trace!("Retrieved me: {}", response);
+    Ok(serde_json::from_str(&response)?)
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::token;
 
     #[tokio::test]
-    async fn test_create_user() -> Result<(), Error> {
+    async fn test_create() -> Result<(), Error> {
         pretty_env_logger::init();
 
         let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
@@ -135,16 +159,37 @@ mod tests {
         Ok(())
     }
 
+    #[feature("integration-test")]
     #[tokio::test]
-    async fn test_create_user_twenty() -> Result<(), Error> {
-        let mut emails = vec![];
-        for _ in 0..20 {
-            let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
-            let result = create(&user).await?;
-            emails.push(result.address)
-        }
-        println!("{:?}", emails);
-        assert_eq!(emails.len(), 20);
+    async fn test_all() -> Result<(), Error> {
+        pretty_env_logger::init();
+        let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
+
+        let create = create(&user).await.unwrap();
+
+        let token = token(&user).await.unwrap();
+
+
+        assert_eq!(
+            create
+                .address
+                .as_str()
+                .is_empty(),
+            false
+        );
+
+        let id = create.id.unwrap();
+
+        let get = get(&token.token, &id).await?;
+
+        assert_eq!(get.id.unwrap(), id.clone());
+
+        let me = me(&token.token).await?;
+
+        assert_eq!(me.id.unwrap(), id.clone());
+
+        delete(&token.token, &id).await.unwrap();
+
         Ok(())
     }
 }

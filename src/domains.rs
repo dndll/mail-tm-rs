@@ -35,6 +35,7 @@ pub struct Domain {
     pub updated_at: String,
 }
 
+// TODO move these
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct View {
@@ -105,4 +106,22 @@ pub async fn domains() -> Result<Domains, Error> {
 
     log::trace!("Retrieved domains: {}", response);
     Ok(serde_json::from_str(&response)?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_domains() -> Result<(), Error> {
+        let domains = domains().await?;
+        assert!(domains.total_items > 0);
+
+        let first = domains.domains.first().unwrap().clone();
+
+        let domains = domains.as_list();
+
+        assert!(domains.contains(&first.domain));
+        Ok(())
+    }
 }

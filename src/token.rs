@@ -16,7 +16,13 @@ pub async fn get_token(user: &User) -> Result<Token, Error> {
     let client = Client::new()?
         .build()?;
 
-    let create_as_string = serde_json::json!(user);
+    log::debug!("Getting token for user {:?}", user);
+
+    let create_as_string = serde_json::json!({
+        "address": format!("{}@{}", user.id, user.domain).to_lowercase(),
+        "password": user.password
+    });
+
     let res = client
         .post(format!("{}/token", MAIL_API_URL).as_str())
         .body(create_as_string.to_string())
