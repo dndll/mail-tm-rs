@@ -73,7 +73,7 @@ pub struct To {
     pub name: String,
 }
 
-pub async fn messages(token: &str, page: Option<usize>) -> Result<HydraCollection<Message>, Error> {
+pub(crate) async fn messages(token: &str, page: Option<usize>) -> Result<HydraCollection<Message>, Error> {
     let client = Client::new()?.with_auth(&token)?.build()?;
 
     log::debug!("Getting messages");
@@ -102,10 +102,10 @@ pub async fn messages(token: &str, page: Option<usize>) -> Result<HydraCollectio
     Ok(serde_json::from_str(&response)?)
 }
 
-pub async fn get(token: &str, id: &str) -> Result<Message, Error> {
+pub(crate) async fn get(token: &str, id: &str) -> Result<Message, Error> {
     let client = Client::new()?.with_auth(&token)?.build()?;
 
-    log::debug!("Searching for account with id {}", id);
+    log::debug!("Searching for message with id {}", id);
 
 
     let response = client
@@ -126,7 +126,7 @@ pub async fn get(token: &str, id: &str) -> Result<Message, Error> {
 }
 
 
-pub async fn delete(token: &str, id: &str) -> Result<(), Error> {
+pub(crate) async fn delete(token: &str, id: &str) -> Result<(), Error> {
     let client = Client::new()?.with_auth(&token)?.build()?;
 
     log::debug!("Searching for account with id {}", id);
@@ -146,7 +146,7 @@ pub async fn delete(token: &str, id: &str) -> Result<(), Error> {
 }
 
 // TODO impl me
-pub async fn patch(token: &str, id: &str) -> Result<(), Error> {
+pub(crate) async fn patch(token: &str, id: &str) -> Result<(), Error> {
     let client = Client::new()?.with_auth(&token)?.build()?;
 
     Ok(())

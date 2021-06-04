@@ -12,7 +12,7 @@ pub struct Token {
     pub id: String,
 }
 
-pub async fn token(user: &User) -> Result<Token, Error> {
+pub(crate) async fn token(user: &User) -> Result<Token, Error> {
     let client = Client::new()?
         .build()?;
 
@@ -30,6 +30,7 @@ pub async fn token(user: &User) -> Result<Token, Error> {
         .await?;
 
     let body = res.text().await?;
+    log::trace!("Retrieved email token: {:?}", body);
 
     Ok(serde_json::from_str(&body)?)
 }

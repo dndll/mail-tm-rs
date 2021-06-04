@@ -13,7 +13,7 @@ pub struct Client {
 
 impl Client {
     pub fn new() -> Result<Client, Error> {
-        let client = Client { // This can be cached
+        let client = Client { // TODO: This can be cached
             headers: get_headers()?,
             builder: reqwest::Client::builder()
                 .user_agent(USER_AGENT)

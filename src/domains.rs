@@ -32,7 +32,7 @@ impl HydraCollection<Domain> {
 
 
 // TODO memoise me for some time
-pub async fn domains() -> Result<HydraCollection<Domain>, Error> {
+pub(crate) async fn domains() -> Result<HydraCollection<Domain>, Error> {
     let client = Client::new()?.build()?;
 
     log::debug!("Getting domains");

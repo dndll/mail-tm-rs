@@ -30,7 +30,7 @@ pub struct Account {
 }
 
 impl Account {
-    pub fn from_user(user: &User) -> Account {
+    fn from_user(user: &User) -> Account {
         Account {
             address: format!("{}@{}", user.id, user.domain),
             password: Some(user.password.clone()),
@@ -47,7 +47,7 @@ impl Account {
     }
 }
 
-pub async fn create(user: &User) -> Result<Account, Error> {
+pub(crate) async fn create(user: &User) -> Result<Account, Error> {
     let client = Client::new()?.build()?;
 
     log::debug!("Creating account for user {:?}", user);
@@ -72,11 +72,10 @@ pub async fn create(user: &User) -> Result<Account, Error> {
     Ok(serde_json::from_str(&response)?)
 }
 
-pub async fn get(token: &str, id: &str) -> Result<Account, Error> {
+pub(crate) async fn get(token: &str, id: &str) -> Result<Account, Error> {
     let client = Client::new()?.with_auth(&token)?.build()?;
 
     log::debug!("Searching for account with id {}", id);
-
 
     let response = client
         .get(&format!("{}/accounts/{}", MAIL_API_URL, id))
@@ -95,7 +94,7 @@ pub async fn get(token: &str, id: &str) -> Result<Account, Error> {
     Ok(serde_json::from_str(&response)?)
 }
 
-pub async fn delete(token: &str, id: &str) -> Result<(), Error> {
+pub(crate) async fn delete(token: &str, id: &str) -> Result<(), Error> {
     let client = Client::new()?.with_auth(&token)?.build()?;
 
     log::debug!("Searching for account with id {}", id);
@@ -114,7 +113,7 @@ pub async fn delete(token: &str, id: &str) -> Result<(), Error> {
     Ok(())
 }
 
-pub async fn me(token: &str) -> Result<Account, Error> {
+pub(crate) async fn me(token: &str) -> Result<Account, Error> {
     let client = Client::new()?.with_auth(&token)?.build()?;
 
     log::debug!("Getting me");
