@@ -2,6 +2,17 @@ use serde::{Deserialize, Serialize};
 use rand::distributions::Alphanumeric;
 use rand::Rng;
 
+/// A global User
+///
+/// This user is the secret sauce for all things to do with this API. There will be raw counterparts
+/// but for now this is what you need.
+///
+/// Implements all the serde types and provides a random implementation to provide quick users.
+///
+/// id: the id of the email
+/// domain: email domain
+/// password: password
+/// email_token: the jwt token returned by mail-tm
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct User {
