@@ -144,7 +144,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_accounts_create() -> Result<(), Error> {
-        pretty_env_logger::try_init();
+        pretty_env_logger::try_init().ok();
 
         let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
         assert_eq!(
@@ -160,7 +160,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_accounts() -> Result<(), Error> {
-        pretty_env_logger::try_init();
+        pretty_env_logger::try_init().ok();
         let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
 
         let create = create(&user).await.unwrap();

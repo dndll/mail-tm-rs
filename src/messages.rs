@@ -162,7 +162,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_messages() -> Result<(), Error> {
-        pretty_env_logger::try_init();
+        pretty_env_logger::try_init().ok();
         let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
         let create = create(&user).await.unwrap();
         let token = crate::token(&user).await.unwrap();

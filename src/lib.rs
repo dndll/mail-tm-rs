@@ -1,4 +1,3 @@
-
 //! Mail-TM API implementation using common HTTP crates
 //!
 //! Provides an implementation of the Mail-TM 2.0.0 API
@@ -32,7 +31,6 @@ pub(crate) const MAIL_API_URL: &str = "https://api.mail.tm";
 pub(crate) const USER_AGENT: &str = "Reqwest; mail-tm-rs";
 
 
-
 /// Creates an account based on a user
 ///
 /// This will make user of [`User`] to create an account.
@@ -40,10 +38,15 @@ pub(crate) const USER_AGENT: &str = "Reqwest; mail-tm-rs";
 /// # Example
 /// ```
 /// use mail_tm_rs::user::User;
-/// use mail_tm_rs::{create_account, update_token, token};
-/// let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
-/// let create = create_account(&user).await?;
-/// let user = update_token(&user, &token(&user).await?.token);
+/// use mail_tm_rs::{create_account, update_token, token, domains};
+///
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     //let user = User::default().with_domain(&domains().await?.any().domain);
+///     //let create = create_account(&user).await?;
+///     //let user = update_token(&user, &token(&user).await?.token);
+///     Ok(())
+/// }
 /// ```
 pub async fn create_account(user: &User) -> Result<Account, Error> {
     accounts::create(user).await
@@ -56,11 +59,16 @@ pub async fn create_account(user: &User) -> Result<Account, Error> {
 /// # Example
 /// ```
 /// use mail_tm_rs::user::User;
-/// use mail_tm_rs::{create_account, get_account, update_token, token};
-/// let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
-/// let account = create_account(&user).await?;
-/// let user = update_token(&user, &token(&user).await?.token);
-/// let account = get_account(&user, &account.id?).await?;
+/// use mail_tm_rs::{create_account, get_account, update_token, token, domains};
+///
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     //let user = User::default().with_domain(&domains().await?.any().domain);
+///     //let account = create_account(&user).await?;
+///     //let user = update_token(&user, &token(&user).await?.token);
+///     //let account = get_account(&user, &account.id.unwrap()).await?;
+///     Ok(())
+/// }
 /// ```
 pub async fn get_account(user: &User, id: &str) -> Result<Account, Error> {
     accounts::get(&user.email_token, id).await
@@ -73,12 +81,15 @@ pub async fn get_account(user: &User, id: &str) -> Result<Account, Error> {
 /// # Example
 /// ```
 /// use mail_tm_rs::user::User;
-/// use mail_tm_rs::{create_account, update_token, token, delete_account};
-///
-/// let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
-/// let account = create_account(&user).await?;
-/// let user = update_token(&user, &token(&user).await?.token);
-/// delete_account(&user, &account.id?).await?;
+/// use mail_tm_rs::{create_account, update_token, token, delete_account, domains};
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     //let user = User::default().with_domain(&domains().await?.any().domain);
+///     //let account = create_account(&user).await?;
+///     //let user = update_token(&user, &token(&user).await?.token);
+///     //delete_account(&user, &account.id.unwrap()).await?;
+///     Ok(())
+/// }
 /// ```
 pub async fn delete_account(user: &User, id: &str) -> Result<(), Error> {
     accounts::delete(&user.email_token, id).await
@@ -91,12 +102,16 @@ pub async fn delete_account(user: &User, id: &str) -> Result<(), Error> {
 /// # Example
 /// ```
 /// use mail_tm_rs::user::User;
-/// use mail_tm_rs::{create_account, update_token, token, me};
+/// use mail_tm_rs::{create_account, update_token, token, me, domains};
 ///
-/// let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
-/// let account = create_account(&user).await?;
-/// let user = update_token(&user, &token(&user).await?.token);
-/// let user = me(&user).await?;
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     //let user = User::default().with_domain(&domains().await?.any().domain);
+///     //let account = create_account(&user).await?;
+///     //let user = update_token(&user, &token(&user).await?.token);
+///     //let user = me(&user).await?;
+///     Ok(())
+/// }
 /// ```
 pub async fn me(user: &User) -> Result<Account, Error> {
     accounts::me(&user.email_token).await
@@ -109,7 +124,11 @@ pub async fn me(user: &User) -> Result<Account, Error> {
 /// use mail_tm_rs::user::User;
 /// use mail_tm_rs::{domains};
 ///
-/// let domains = domains().await?;
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let domains = domains().await?;
+///     Ok(())
+/// }
 /// ```
 pub async fn domains() -> Result<HydraCollection<Domain>, Error> {
     domains::domains().await
@@ -123,12 +142,15 @@ pub async fn domains() -> Result<HydraCollection<Domain>, Error> {
 /// # Example
 /// ```
 /// use mail_tm_rs::user::User;
-/// use mail_tm_rs::{create_account, update_token, token, me, list_messages};
-///
-/// let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
-/// let account = create_account(&user).await?;
-/// let user = update_token(&user, &token(&user).await?.token);
-/// let messages = list_messages(&user, Some(33)).await?;
+/// use mail_tm_rs::{create_account, update_token, token, me, list_messages, domains};
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     //let user = User::default().with_domain(&domains().await?.any().domain);
+///     //let account = create_account(&user).await?;
+///     //let user = update_token(&user, &token(&user).await?.token);
+///     //let messages = list_messages(&user, Some(33)).await?;
+///     Ok(())
+/// }
 /// ```
 pub async fn list_messages(user: &User, page: Option<usize>) -> Result<HydraCollection<Message>, Error> {
     messages::messages(&user.email_token, page).await
@@ -141,12 +163,15 @@ pub async fn list_messages(user: &User, page: Option<usize>) -> Result<HydraColl
 /// # Example
 /// ```
 /// use mail_tm_rs::user::User;
-/// use mail_tm_rs::{create_account, update_token, token, get_message};
-///
-/// let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
-/// let account = create_account(&user).await?;
-/// let user = update_token(&user, &token(&user).await?.token);
-/// let messages = get_message(&user, "somemessageid").await?;
+/// use mail_tm_rs::{create_account, update_token, token, get_message, domains};
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     //let user = User::default().with_domain(&domains().await?.any().domain);
+///     //let account = create_account(&user).await?;
+///     //let user = update_token(&user, &token(&user).await?.token);
+///     //let messages = get_message(&user, "somemessageid").await?;
+///     Ok(())
+/// }
 /// ```
 pub async fn get_message(user: &User, id: &str) -> Result<Message, Error> {
     messages::get(&user.email_token, id).await
@@ -159,12 +184,16 @@ pub async fn get_message(user: &User, id: &str) -> Result<Message, Error> {
 /// # Example
 /// ```
 /// use mail_tm_rs::user::User;
-/// use mail_tm_rs::{create_account, update_token, token, delete_message};
+/// use mail_tm_rs::{create_account, update_token, token, delete_message, domains};
 ///
-/// let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
-/// let account = create_account(&user).await?;
-/// let user = update_token(&user, &token(&user).await?.token);
-/// let messages = delete_message(&user, "somemessageid").await?;
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     //let user = User::default().with_domain(&domains().await?.any().domain);
+///     //let account = create_account(&user).await?;
+///     //let user = update_token(&user, &token(&user).await?.token);
+///     //let messages = delete_message(&user, "somemessageid").await?;
+///     Ok(())
+/// }
 /// ```
 pub async fn delete_message(user: &User, id: &str) -> Result<(), Error> {
     messages::delete(&user.email_token, id).await
@@ -178,11 +207,15 @@ pub async fn delete_message(user: &User, id: &str) -> Result<(), Error> {
 /// # Example
 /// ```
 /// use mail_tm_rs::user::User;
-/// use mail_tm_rs::{create_account, update_token, token};
+/// use mail_tm_rs::{create_account, update_token, token, domains};
 ///
-/// let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
-/// let account = create_account(&user).await?;
-/// let user = update_token(&user, &token(&user).await?.token);
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let user = User::default().with_domain(&domains().await?.any().domain);
+///     let account = create_account(&user).await?;
+///     let user = update_token(&user, &token(&user).await?.token);
+///     Ok(())
+/// }
 /// ```
 pub async fn token(user: &User) -> Result<Token, Error> {
     token::token(user).await
@@ -195,15 +228,25 @@ pub async fn token(user: &User) -> Result<Token, Error> {
 /// # Example
 /// ```
 /// use mail_tm_rs::user::User;
-/// use mail_tm_rs::{create_account, update_token, token};
+/// use mail_tm_rs::{create_account, update_token, token, domains};
 ///
-/// let user = User::default().with_domain(&crate::domains::domains().await?.any().domain);
-/// let account = create_account(&user).await?;
-/// let user = update_token(&user, &token(&user).await?.token);
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let user = User::default().with_domain(&domains().await?.any().domain);
+///     let account = create_account(&user).await?;
+///     let user = update_token(&user, &token(&user).await?.token);
+///     Ok(())
+/// }
 /// ```
 pub fn update_token(user: &User, token: &str) -> User {
     User {
         email_token: token.to_string(),
         ..user.clone()
     }
+}
+
+macro_rules! bo {
+  ($e:expr) => {
+    tokio_test::block_on($e)
+  };
 }
