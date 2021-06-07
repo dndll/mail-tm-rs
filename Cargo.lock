@@ -438,7 +438,7 @@ dependencies = [
 
 [[package]]
 name = "mail-tm-rs"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "anyhow",
  "log",
