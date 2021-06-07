@@ -1,10 +1,11 @@
 [package]
 name = "mail-tm-rs"
 description = "Mail-Tm(https://mail.tm/en/) api implementation"
-version = "0.0.4"
+version = "0.0.5"
 edition = "2018"
 authors = ["AwesomeIbex <awesomealpineibex@gmail.com>"]
 repository = "https://github.com/AwesomeIbex/mail-tm-rs/"
+documentation = "https://docs.rs/mail-tm-rs/"
 readme = "README.md"
 license-file = "LICENSE"
 keywords = ["mail-tm", "api", "reqwest"]
