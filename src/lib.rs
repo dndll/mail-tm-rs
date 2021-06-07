@@ -1,3 +1,14 @@
+
+//! Mail-TM API implementation using common HTTP crates
+//!
+//! Provides an implementation of the Mail-TM 2.0.0 API
+//! Largely it is around 80% complete and is missing possibly future deprecations such as sources.
+//! At present the dependencies are very strict and requires future testing to open it up.
+//!
+//! Expect some breaking changes until v1.0.0 but will try to document them as best I can.
+//!
+//! [`Mail-TM`]: https://mail.tm/
+
 use anyhow::{Context, Error};
 
 use token::Token;
@@ -20,15 +31,6 @@ pub mod user;
 pub(crate) const MAIL_API_URL: &str = "https://api.mail.tm";
 pub(crate) const USER_AGENT: &str = "Reqwest; mail-tm-rs";
 
-//! Mail-TM API implementation using common HTTP crates
-//!
-//! Provides an implementation of the Mail-TM 2.0.0 API
-//! Largely it is around 80% complete and is missing possibly future deprecations such as sources.
-//! At present the dependencies are very strict and requires future testing to open it up.
-//!
-//! Expect some breaking changes until v1.0.0 but will try to document them as best I can.
-//!
-//! [`Mail-TM`]: https://mail.tm/
 
 
 /// Creates an account based on a user
